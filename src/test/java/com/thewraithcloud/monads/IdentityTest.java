@@ -12,7 +12,7 @@ import org.junit.Test;
  */
 public class IdentityTest {
     @Test
-    public void ShouldWrapAString() {
+    public void shouldWrapAString() {
         String value = "My test string value";
 
         Identity<String> identity = Identity.of(value);
@@ -21,7 +21,7 @@ public class IdentityTest {
     }
 
     @Test
-    public void ShouldMapAString() {
+    public void shouldMapAString() {
         String value = "My test string value";
 
         Identity<String> identity = Identity.of(value);
@@ -33,23 +33,24 @@ public class IdentityTest {
     }
 
     @Test
-    public void MethodsShouldChain() {
+    public void shouldChainMethods() {
         String value = "My test string value";
         String newValue = Identity.of(value).map(String::toUpperCase).get();
 
-        assertEquals("Result is returned by chaining #of then #map then #get  ", value.toUpperCase(), newValue);
+        assertEquals("String should be mapped to upper case.", value.toUpperCase(), newValue);
     }
 
     @Test
-    public void MappersShouldChain() {
+    public void shouldChainMappers() {
         String value = "My test string value";
         String newValue = Identity.of(value).map((String s) -> s.substring(0, 5)).map(String::toUpperCase).get();
 
-        assertEquals("Result is returned by mapper chain.", "MY TE", newValue);
+        assertEquals("String should be truncated to left 5 characters and transformed to upper case.", "MY TE",
+                newValue);
     }
 
     @Test
-    public void MappersShouldCompose() {
+    public void shouldComposeMappers() {
         Function<String, String> takeLeft5 = (String s) -> s.substring(0, 5);
         Function<String, String> toUpperCase = String::toUpperCase;
         Function<String, String> mapper = toUpperCase.compose(takeLeft5);
@@ -57,6 +58,45 @@ public class IdentityTest {
         String value = "My test string value";
         String newValue = Identity.of(value).map(mapper).get();
 
-        assertEquals("Result is returned by mapper composure.", "MY TE", newValue);
+        assertEquals("String should be truncated to left 5 characters and transformed to upper case.", "MY TE",
+                newValue);
+    }
+
+    @Test
+    public void shouldFlatmapAString() {
+        Function<String, Identity<String>> toUpperCaseM = (String s) -> {
+            Identity<String> result = Identity.of(s.toUpperCase());
+            return result;
+        };
+
+        String value = "My test string value";
+        String newValue = Identity.of(value).flatMap(toUpperCaseM).get();
+
+        assertEquals("String should be mapped to upper case.", value.toUpperCase(), newValue);
+    }
+
+    @Test
+    public void shouldChainFlatmappers() {
+        Function<String, Identity<String>> takeLeft5M = (String s) -> Identity.of(s.substring(0, 5));
+        Function<String, Identity<String>> toUpperCaseM = (String s) -> Identity.of(s.toUpperCase());
+
+        String value = "My test string value";
+        String newValue = Identity.of(value).flatMap(takeLeft5M).flatMap(toUpperCaseM).get();
+
+        assertEquals("String should be truncated to left 5 characters and transformed to upper case.", "MY TE",
+                newValue);
+    }
+
+    @Test
+    public void shouldComposeFlatmappers() {
+        Function<String, Identity<String>> takeLeft5M = (String s) -> Identity.of(s.substring(0, 5));
+        Function<String, Identity<String>> toUpperCaseM = (String s) -> Identity.of(s.toUpperCase());
+        Function<String, Identity<String>> flatMapper = takeLeft5M.andThen(Identity::get).andThen(toUpperCaseM);
+
+        String value = "My test string value";
+        String newValue = Identity.of(value).flatMap(flatMapper).get();
+
+        assertEquals("String should be truncated to left 5 characters and transformed to upper case.", "MY TE",
+                newValue);
     }
 }

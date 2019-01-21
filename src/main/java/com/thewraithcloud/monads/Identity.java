@@ -9,7 +9,7 @@ import java.util.function.Supplier;
  *
  * @param <T> is the type to be wrapped
  */
-public class Identity<T> implements Functor<T, Identity<?>> {
+public class Identity<T> {
     // The immutable value wrapped by this Identity.
     private final T value;
 
@@ -66,6 +66,15 @@ public class Identity<T> implements Functor<T, Identity<?>> {
     }
 
     /**
+     * Retrieves the value wrapped by this Identity.
+     *
+     * @return the wrapped value
+     */
+    public T get() {
+        return value;
+    }
+
+    /**
      * The map function of this functor. {@code}map :: (a -> b) -> Identity a ->
      * Identity b{@code}
      *
@@ -74,12 +83,26 @@ public class Identity<T> implements Functor<T, Identity<?>> {
      * @param R   is the type of the returned instance of Identity
      * @return an instance of Identity that wraps the mapped value
      */
-    public <R> Identity<R> map(Function<T, R> fxn) {
-        final R result = fxn.apply(value);
-        return new Identity<>(result);
+    public <R> Identity<R> map(Function<? super T, ? extends R> fxn) {
+        Objects.requireNonNull(fxn);
+
+        // final R result = fxn.apply(value);
+        // return new Identity<>(result);
+        return new Identity<>(fxn.apply(value));
     }
 
-    public T get() {
-        return value;
+    /**
+     * The flatmap function of this functor. {@code}flatmap :: (a -> Identity b) ->
+     * Identity a -> Identity b{@code}
+     *
+     * @param fxn the mapper function to apply to the value: {@code}fxn :: a ->
+     *            Identity b{@code}
+     * @param R   is the type of the returned instance of Identity
+     * @return an instance of Identity that wraps the mapped value
+     */
+    public <R> Identity<R> flatMap(Function<? super T, Identity<R>> fxn) {
+        Objects.requireNonNull(fxn);
+
+        return fxn.apply(value);
     }
 }
